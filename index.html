@@ -452,11 +452,11 @@
 
 <div class="nav-bar">
   <a href="index.html">⌂ Anasayfa</a>
-  <button id="notlar-toggle-btn" onClick="notlarToggle()">📝 Notlar</button>
-  <a href="index.html">📅 Randevular</a>
-  <button onClick="yedekle()">💾 Yedekle</button>
-  <button onClick="document.getElementById('yukle-input').click()">⬆️ Güncelle</button>
-  <input type="file" id="yukle-input" accept="application/json" style="display:none" onChange="dosyaYukle(event)">
+  <button id="notlar-toggle-btn" onclick="notlarToggle()">📝 Notlar</button>
+  <a href="randevular.html">📅 Randevular</a>
+  <button onclick="yedekle()">💾 Yedekle</button>
+  <button onclick="document.getElementById('yukle-input').click()">⬆️ Güncelle</button>
+  <input type="file" id="yukle-input" accept="application/json" style="display:none" onchange="dosyaYukle(event)">
 </div>
 
 <div class="sheet" id="sheet"></div>
@@ -470,27 +470,27 @@
     <input type="text" id="notBaslik" placeholder="Örn: Veli toplantısı için hazırlık">
     <label for="notTarih">Tarih (opsiyonel)</label>
     <input type="date" id="notTarih">
-    <button id="notKaydetBtn" class="not-kaydet-btn" onClick="kaydetNot()">Kaydet</button>
+    <button id="notKaydetBtn" class="not-kaydet-btn" onclick="kaydetNot()">Kaydet</button>
   </div>
 
   <div id="notListesi" class="not-grid"></div>
 </div>
 
-<div class="overlay" id="overlay" onClick="if(event.target===this) kapat()">
+<div class="overlay" id="overlay" onclick="if(event.target===this) kapat()">
   <div class="modal">
     <div class="modal-head">
       <span class="baslik" id="modal-baslik"></span>
-      <button class="modal-close" onClick="kapat()">×</button>
+      <button class="modal-close" onclick="kapat()">×</button>
     </div>
     <div class="modal-body">
       <div class="item-list" id="item-list"></div>
     </div>
     <div class="add-item-wrap">
-      <button class="add-item-btn" onClick="manuelMaddeEkle()">+ Yeni madde ekle</button>
+      <button class="add-item-btn" onclick="manuelMaddeEkle()">+ Yeni madde ekle</button>
     </div>
     <div class="modal-foot">
-      <button class="kaydet" onClick="kaydet()">Kaydet</button>
-      <button class="sil" onClick="sil()">Sil</button>
+      <button class="kaydet" onclick="kaydet()">Kaydet</button>
+      <button class="sil" onclick="sil()">Sil</button>
     </div>
   </div>
 </div>
@@ -724,7 +724,7 @@ function yedekle(){
   const data = {};
   for (let i = 0; i < localStorage.length; i++){
     const key = localStorage.key(i);
-    if (key.startsWith("gun-")) data[key] = localStorage.getItem(key);
+    data[key] = localStorage.getItem(key);
   }
   const now = new Date();
   const pad = n => String(n).padStart(2, "0");
@@ -748,19 +748,20 @@ function dosyaYukle(e){
   reader.onload = function(ev){
     try{
       const data = JSON.parse(ev.target.result);
-      if (!confirm("Seçilen yedek dosyasındaki kayıtlar bu cihaza yüklenecek. Devam edilsin mi?")){
+      if (!confirm("Seçilen yedek dosyasındaki kayıtlar (Anasayfa, Notlar, Takvim vb. tüm sayfalar) bu cihaza yüklenecek. Devam edilsin mi?")){
         e.target.value = "";
         return;
       }
       let sayac = 0;
       Object.keys(data).forEach(key => {
-        if (key.startsWith("gun-")){
-          localStorage.setItem(key, data[key]);
-          sayac++;
-        }
+        localStorage.setItem(key, data[key]);
+        sayac++;
       });
       document.querySelectorAll(".day[data-iso]").forEach(el => gunGoruntusunuGuncelle(el.dataset.iso));
-      alert(sayac + " günlük kayıt yüklendi.");
+      if (typeof notlariCiz === "function" && document.getElementById("notListesi")){
+        notlariCiz();
+      }
+      alert(sayac + " kayıt yüklendi.");
     } catch(err){
       alert("Dosya okunamadı. Lütfen geçerli bir yedek (.json) dosyası seçin.");
     }
