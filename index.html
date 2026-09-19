@@ -253,7 +253,6 @@
     width: 22px;
     height: 22px;
     flex-shrink:0;
-    margin-top: 5px;
     border-radius: 50%;
     border: 1.5px solid var(--border);
     background: #eeeeee;
@@ -276,6 +275,35 @@
     color:#fff;
     background: var(--red);
     border-color: var(--red);
+  }
+  .item-controls{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 6px;
+    flex-shrink:0;
+    margin-top: 5px;
+  }
+  .item-sil{
+    width: 22px;
+    height: 22px;
+    flex-shrink:0;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: #eeeeee;
+    font-size: 11px;
+    line-height:1;
+    color: #bbbbbb;
+    cursor:pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+  }
+  .item-sil:hover{
+    background: var(--red);
+    border-color: var(--red);
+    color:#fff;
   }
   .add-item-btn{
     display:block;
@@ -361,7 +389,20 @@
     font-family: inherit;
     color: var(--ink);
   }
-  .not-form-card input:focus{ outline:none; border-color: var(--ink); }
+  .not-baslik-input{
+    width:100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.4;
+    font-family: inherit;
+    color: var(--ink);
+    resize: none;
+    overflow: hidden;
+    min-height: 40px;
+  }
+  .not-form-card input:focus, .not-baslik-input:focus{ outline:none; border-color: var(--ink); }
   .not-kaydet-btn{
     margin-top: 16px;
     width: 100%;
@@ -467,7 +508,7 @@
 
   <div class="not-form-card">
     <label for="notBaslik">Not Başlığı</label>
-    <input type="text" id="notBaslik" placeholder="Örn: Veli toplantısı için hazırlık">
+    <textarea id="notBaslik" class="not-baslik-input" rows="1" placeholder="Örn: Veli toplantısı için hazırlık" oninput="notBaslikBuyut()"></textarea>
     <label for="notTarih">Tarih (opsiyonel)</label>
     <input type="date" id="notTarih">
     <button id="notKaydetBtn" class="not-kaydet-btn" onclick="kaydetNot()">Kaydet</button>
@@ -642,7 +683,10 @@ function maddeEkle(metin, durum, sonrasınaEkle){
   const sembol = durum === "ok" ? "✓" : durum === "x" ? "✗" : "–";
   row.innerHTML = `
     <textarea class="item-input" rows="3" placeholder="Madde yaz...">${(metin || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}</textarea>
-    <button class="item-status" data-status="${durum || ''}" onclick="maddeDurum(this)">${sembol}</button>
+    <div class="item-controls">
+      <button class="item-status" data-status="${durum || ''}" onclick="maddeDurum(this)">${sembol}</button>
+      <button class="item-sil" onclick="maddeSil(this)" title="Bu maddeyi sil">✕</button>
+    </div>
   `;
 
   if (sonrasınaEkle && sonrasınaEkle.nextSibling){
@@ -696,6 +740,13 @@ function maddeDurum(btn){
   const yeni = mevcut === "ok" ? "x" : "ok";
   btn.dataset.status = yeni;
   btn.textContent = yeni === "ok" ? "✓" : "✗";
+}
+
+function maddeSil(btn){
+  if (!confirm("Bu madde silinsin mi?")) return;
+  const row = btn.closest(".item-row");
+  row.remove();
+  numaralandir();
 }
 
 function kaydet(){
@@ -892,6 +943,7 @@ function kaydetNot(){
   notlariKaydet(notlar);
   baslikInput.value = "";
   tarihInput.value = "";
+  notBaslikBuyut();
   notlariCiz();
 }
 function silNot(id){
@@ -908,9 +960,15 @@ function duzenleNot(id){
   if (!not) return;
   document.getElementById("notBaslik").value = not.baslik;
   document.getElementById("notTarih").value = not.tarih || "";
+  notBaslikBuyut();
   notDuzenlenenId = id;
   document.getElementById("notKaydetBtn").textContent = "Güncelle";
   document.getElementById("notBaslik").focus();
+}
+function notBaslikBuyut(){
+  const ta = document.getElementById("notBaslik");
+  ta.style.height = "auto";
+  ta.style.height = ta.scrollHeight + "px";
 }
 function tamamlaNot(id){
   const notlar = notlariYukle();
