@@ -305,6 +305,27 @@
     border-color: var(--red);
     color:#fff;
   }
+  .item-duzenle{
+    width: 22px;
+    height: 22px;
+    flex-shrink:0;
+    border-radius: 50%;
+    border: 1.5px solid #d4a90c;
+    background: #f0c419;
+    font-size: 11px;
+    line-height:1;
+    color: var(--ink);
+    cursor:pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+  }
+  .item-duzenle[data-acik="1"]{
+    background: var(--ink);
+    border-color: var(--ink);
+    color:#fff;
+  }
   .add-item-btn{
     display:block;
     width:100%;
@@ -328,28 +349,6 @@
     text-align:center;
     padding: 10px;
   }
-  .modal-foot{
-    display:flex;
-    gap: 10px;
-    padding: 14px 20px;
-    border-top: 1px solid var(--border);
-    margin-top: 10px;
-    flex-shrink: 0;
-  }
-  .modal-foot button{
-    flex:1;
-    padding: 11px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-size: 14px;
-    font-weight: 700;
-    cursor:pointer;
-  }
-  .modal-foot button.duzenle{ background:#f0f0f0; color: var(--ink); }
-  .modal-foot button.kaydet{ background: var(--ink); color:#fff; border-color: var(--ink); }
-  .modal-foot button.sil{ background:#fff; color: var(--red); border-color: var(--red); }
-  .modal-foot button:hover{ opacity:.85; }
-
   /* --- Notlar bölümü --- */
   .notlar-baslik{
     font-size: 22px;
@@ -529,10 +528,6 @@
     <div class="add-item-wrap">
       <button class="add-item-btn" onclick="manuelMaddeEkle()">+ Yeni madde ekle</button>
     </div>
-    <div class="modal-foot">
-      <button class="kaydet" onclick="kaydet()">Kaydet</button>
-      <button class="sil" onclick="sil()">Sil</button>
-    </div>
   </div>
 </div>
 
@@ -673,6 +668,7 @@ function ac(iso){
 }
 
 function kapat(){
+  kaydetGun();
   document.getElementById("overlay").classList.remove("show");
   acikGun = null;
 }
@@ -686,6 +682,7 @@ function maddeEkle(metin, durum, sonrasınaEkle){
     <div class="item-controls">
       <button class="item-status" data-status="${durum || ''}" onclick="maddeDurum(this)">${sembol}</button>
       <button class="item-sil" onclick="maddeSil(this)" title="Bu maddeyi sil">✕</button>
+      <button class="item-duzenle" data-acik="0" onclick="maddeDuzenleToggle(this)" title="Düzenle">✎</button>
     </div>
   `;
 
@@ -749,7 +746,7 @@ function maddeSil(btn){
   numaralandir();
 }
 
-function kaydet(){
+function kaydetGun(){
   if (acikGun === null) return;
   const items = [];
   itemList.querySelectorAll(".item-row").forEach(row => {
@@ -759,15 +756,33 @@ function kaydet(){
   });
   saveGunData(acikGun, { items });
   gunGoruntusunuGuncelle(acikGun);
-  kapat();
 }
 
-function sil(){
-  if (acikGun === null) return;
-  if (!confirm(acikGun + " tarihli notlar silinsin mi?")) return;
-  localStorage.removeItem(storageKey(acikGun));
-  gunGoruntusunuGuncelle(acikGun);
-  kapat();
+function maddeDuzenleToggle(btn){
+  const row = btn.closest(".item-row");
+  const ta = row.querySelector(".item-input");
+  const acik = btn.dataset.acik === "1";
+
+  if (!acik){
+    // düzenleme için aç: metnin tamamı sığacak şekilde aşağı doğru büyüt
+    ta.style.maxHeight = "none";
+    ta.style.height = "auto";
+    ta.style.height = ta.scrollHeight + "px";
+    ta.style.overflowY = "hidden";
+    btn.dataset.acik = "1";
+    btn.textContent = "💾";
+    btn.title = "Kaydet ve kapat";
+    ta.focus();
+  } else {
+    // kaydet ve kapat: eski kompakt boyuta dön
+    ta.style.maxHeight = "";
+    ta.style.height = "";
+    ta.style.overflowY = "";
+    btn.dataset.acik = "0";
+    btn.textContent = "✎";
+    btn.title = "Düzenle";
+    kaydetGun();
+  }
 }
 
 // --- Yedekle / Güncelle ---
