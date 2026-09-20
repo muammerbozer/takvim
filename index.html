@@ -486,6 +486,99 @@
   .not-btn-tamamla{ background: var(--green); color:#fff; }
   .not-btn-duzenle{ background:#f0c419; color: var(--ink); border: 1px solid #d4a90c; }
   .not-btn-sil{ background: var(--red); color:#fff; }
+
+  /* --- Gazetelik --- */
+  .gazetelik-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 12px;
+  }
+  .gazetelik-kutu{
+    background:#fafafa;
+    border:1px solid var(--border);
+    border-radius:8px;
+    min-width: 120px;
+    max-width: 150px;
+    flex: 1 1 120px;
+    padding: 8px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    justify-content:center;
+    transition: box-shadow .15s ease, background .15s ease;
+  }
+  .gazetelik-kutu.kapali{
+    align-items:center;
+    min-height: 40px;
+    cursor:pointer;
+    border-style:dashed;
+    color: var(--ink-soft);
+    font-weight:700;
+    font-size:12px;
+    background:#f3f3f3;
+    text-align:center;
+  }
+  .gazetelik-kutu.kapali:hover{ background:#eaeaea; color:var(--ink); }
+  .gazetelik-kutu.kilitli{ background:#eef6ee; border-color:#bcdcbc; }
+  .gazetelik-input{
+    width:100%;
+    padding: 6px 8px;
+    border:1px solid var(--border);
+    border-radius:5px;
+    font-size:12px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  .gazetelik-input:focus{ outline:none; border-color:var(--ink); }
+  .gazetelik-btn-row{
+    display:flex;
+    gap:6px;
+  }
+  .gazetelik-btn{
+    flex:1;
+    min-width:0;
+    border:none;
+    border-radius:5px;
+    background: var(--ink);
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    padding:6px 2px;
+    cursor:pointer;
+    transition:opacity .15s ease;
+    white-space:nowrap;
+  }
+  .gazetelik-btn:hover{ opacity:.85; }
+  .gazetelik-kutu.kilitli .gazetelik-btn.gazetelik-btn-duzenle{ background:#f0c419; color: var(--ink); border:1px solid #d4a90c; }
+  .gazetelik-btn.gazetelik-btn-sil{ background: var(--red); color:#fff; }
+  .gazetelik-link{
+    font-size:13px;
+    font-weight:700;
+    color:#1565c0;
+    text-decoration:underline;
+    cursor:pointer;
+    word-break:break-word;
+    min-height: 18px;
+  }
+  .gazetelik-link:hover{ color:#0d47a1; }
+  .gazetelik-bos{ font-size:12px; color: var(--ink-soft); }
+  .gazetelik-yeni{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:90px;
+    min-height:40px;
+    flex: 0 0 90px;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    background:transparent;
+    color: var(--ink-soft);
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .gazetelik-yeni:hover{ background:var(--row-hover); color:var(--ink); }
 </style>
 </head>
 <body>
@@ -494,6 +587,7 @@
   <a href="index.html">⌂ Anasayfa</a>
   <button id="notlar-toggle-btn" onclick="notlarToggle()">📝 Notlar</button>
   <a href="randevular.html">📅 Randevular</a>
+  <button id="gazetelik-toggle-btn" onclick="gazetelikToggle()">📰 Gazetelik</button>
   <button onclick="yedekle()">💾 Yedekle</button>
   <button onclick="document.getElementById('yukle-input').click()">⬆️ Güncelle</button>
   <input type="file" id="yukle-input" accept="application/json" style="display:none" onchange="dosyaYukle(event)">
@@ -514,6 +608,12 @@
   </div>
 
   <div id="notListesi" class="not-grid"></div>
+</div>
+
+<div class="sheet" id="gazetelik-sheet" style="display:none;">
+  <div class="notlar-baslik">Gazetelik</div>
+  <p class="notlar-intro">Kutucuğa tıklayarak gazete veya site adını ve linkini kaydedebilirsin. Kayıtlı kutucuğa tıklayınca site yeni sekmede açılır.</p>
+  <div id="gazetelikListesi" class="gazetelik-grid"></div>
 </div>
 
 <div class="overlay" id="overlay" onclick="if(event.target===this) kapat()">
@@ -840,8 +940,10 @@ function dosyaYukle(e){
 function notlarToggle(){
   const takvim = document.getElementById("sheet");
   const notlar = document.getElementById("notlar-sheet");
+  const gazetelik = document.getElementById("gazetelik-sheet");
   const btn = document.getElementById("notlar-toggle-btn");
   const gizli = notlar.style.display === "none";
+  gazetelik.style.display = "none";
   if (gizli){
     takvim.style.display = "none";
     notlar.style.display = "block";
@@ -992,6 +1094,212 @@ function tamamlaNot(id){
   not.tamamlandi = !not.tamamlandi;
   notlariKaydet(notlar);
   notlariCiz();
+}
+
+// --- Gazetelik (gömülü panel) ---
+function gazetelikToggle(){
+  const takvim = document.getElementById("sheet");
+  const notlar = document.getElementById("notlar-sheet");
+  const gazetelik = document.getElementById("gazetelik-sheet");
+  const notlarBtn = document.getElementById("notlar-toggle-btn");
+  const gizli = gazetelik.style.display === "none" || gazetelik.style.display === "";
+  if (gizli){
+    takvim.style.display = "none";
+    notlar.style.display = "none";
+    notlarBtn.textContent = "📝 Notlar";
+    gazetelik.style.display = "block";
+    gazetelikCiz();
+  } else {
+    gazetelik.style.display = "none";
+    takvim.style.display = "block";
+  }
+}
+
+const GAZETELIK_STORAGE_KEY = "muammerBozerGazetelik";
+
+function gazetelikYukle(){
+  try{
+    const veri = localStorage.getItem(GAZETELIK_STORAGE_KEY);
+    const kayitlar = veri ? JSON.parse(veri) : [];
+    return Array.isArray(kayitlar) ? kayitlar : [];
+  } catch(e){ return []; }
+}
+
+function gazetelikKaydetVeri(kayitlar){
+  localStorage.setItem(GAZETELIK_STORAGE_KEY, JSON.stringify(kayitlar));
+}
+
+function gazetelikCiz(){
+  const liste = document.getElementById("gazetelikListesi");
+  liste.innerHTML = "";
+  const kayitlar = gazetelikYukle();
+
+  if (kayitlar.length === 0){
+    liste.appendChild(gazetelikKapaliKutuOlustur());
+  } else {
+    kayitlar.forEach(k => liste.appendChild(gazetelikKilitliKutuOlustur(k)));
+  }
+
+  const yeniTile = document.createElement("button");
+  yeniTile.className = "gazetelik-yeni";
+  yeniTile.type = "button";
+  yeniTile.textContent = "+ Yeni";
+  yeniTile.onclick = gazetelikYeniKutu;
+  liste.appendChild(yeniTile);
+}
+
+function gazetelikKapaliKutuOlustur(){
+  const kutu = document.createElement("div");
+  kutu.className = "gazetelik-kutu kapali";
+  kutu.textContent = "+ Kayıt Ekle";
+  kutu.addEventListener("click", function(){
+    const acikKutu = gazetelikAcikKutuOlustur(null);
+    kutu.replaceWith(acikKutu);
+    const ilkInput = acikKutu.querySelector(".gazetelik-input");
+    if (ilkInput) ilkInput.focus();
+  });
+  return kutu;
+}
+
+function gazetelikAcikKutuOlustur(kayit){
+  const kutu = document.createElement("div");
+  kutu.className = "gazetelik-kutu acik";
+  kutu.dataset.id = kayit ? kayit.id : "";
+
+  const metinInput = document.createElement("input");
+  metinInput.type = "text";
+  metinInput.className = "gazetelik-input";
+  metinInput.placeholder = "Gazete / site adı";
+  metinInput.value = kayit ? (kayit.metin || "") : "";
+
+  const linkInput = document.createElement("input");
+  linkInput.type = "text";
+  linkInput.className = "gazetelik-input";
+  linkInput.placeholder = "https://...";
+  linkInput.value = kayit ? (kayit.link || "") : "";
+
+  const btnRow = document.createElement("div");
+  btnRow.className = "gazetelik-btn-row";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "gazetelik-btn";
+  btn.textContent = "Kaydet";
+  btn.addEventListener("click", function(){ gazetelikKaydetTikla(kutu); });
+
+  const silBtn = document.createElement("button");
+  silBtn.type = "button";
+  silBtn.className = "gazetelik-btn gazetelik-btn-sil";
+  silBtn.textContent = "Sil";
+  silBtn.addEventListener("click", function(){ gazetelikSil(kutu); });
+
+  btnRow.appendChild(btn);
+  btnRow.appendChild(silBtn);
+
+  kutu.appendChild(metinInput);
+  kutu.appendChild(linkInput);
+  kutu.appendChild(btnRow);
+  return kutu;
+}
+
+function gazetelikKilitliKutuOlustur(kayit){
+  const kutu = document.createElement("div");
+  kutu.className = "gazetelik-kutu kilitli";
+  kutu.dataset.id = kayit.id;
+
+  const link = document.createElement("div");
+  link.className = "gazetelik-link";
+  link.textContent = kayit.metin || "(isimsiz)";
+  link.addEventListener("click", function(){
+    if (kayit.link) window.open(kayit.link, "_blank");
+  });
+
+  const btnRow = document.createElement("div");
+  btnRow.className = "gazetelik-btn-row";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "gazetelik-btn gazetelik-btn-duzenle";
+  btn.textContent = "Düzenle";
+  btn.addEventListener("click", function(){
+    const acikKutu = gazetelikAcikKutuOlustur(kayit);
+    kutu.replaceWith(acikKutu);
+    const ilkInput = acikKutu.querySelector(".gazetelik-input");
+    if (ilkInput) ilkInput.focus();
+  });
+
+  const silBtn = document.createElement("button");
+  silBtn.type = "button";
+  silBtn.className = "gazetelik-btn gazetelik-btn-sil";
+  silBtn.textContent = "Sil";
+  silBtn.addEventListener("click", function(){ gazetelikSil(kutu); });
+
+  btnRow.appendChild(btn);
+  btnRow.appendChild(silBtn);
+
+  kutu.appendChild(link);
+  kutu.appendChild(btnRow);
+  return kutu;
+}
+
+function gazetelikSil(kutu){
+  const onay = confirm("Bu kaydı silmek istediğinize emin misiniz?");
+  if (!onay) return;
+
+  const id = kutu.dataset.id;
+  if (id){
+    let kayitlar = gazetelikYukle();
+    kayitlar = kayitlar.filter(k => k.id !== id);
+    gazetelikKaydetVeri(kayitlar);
+    gazetelikCiz();
+  } else {
+    kutu.remove();
+    const liste = document.getElementById("gazetelikListesi");
+    if (liste.querySelectorAll(".gazetelik-kutu").length === 0){
+      gazetelikCiz();
+    }
+  }
+}
+
+function gazetelikKaydetTikla(kutu){
+  const inputlar = kutu.querySelectorAll(".gazetelik-input");
+  const metin = inputlar[0].value.trim();
+  const link = inputlar[1].value.trim();
+
+  if (!metin){
+    alert("Lütfen gazete / site adı girin.");
+    return;
+  }
+
+  const kayitlar = gazetelikYukle();
+  let id = kutu.dataset.id;
+
+  if (id){
+    const mevcut = kayitlar.find(k => k.id === id);
+    if (mevcut){
+      mevcut.metin = metin;
+      mevcut.link = link;
+    }
+  } else {
+    id = Date.now().toString();
+    kayitlar.push({ id, metin, link });
+  }
+
+  gazetelikKaydetVeri(kayitlar);
+  gazetelikCiz();
+}
+
+function gazetelikYeniKutu(){
+  const liste = document.getElementById("gazetelikListesi");
+  const yeniTile = liste.querySelector(".gazetelik-yeni");
+  const acikKutu = gazetelikAcikKutuOlustur(null);
+  if (yeniTile){
+    liste.insertBefore(acikKutu, yeniTile);
+  } else {
+    liste.appendChild(acikKutu);
+  }
+  const ilkInput = acikKutu.querySelector(".gazetelik-input");
+  if (ilkInput) ilkInput.focus();
 }
 </script>
 
